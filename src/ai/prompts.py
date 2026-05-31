@@ -154,7 +154,7 @@ CONTENT_ENRICHMENT_USER = """Provide a structured bilingual analysis for the fol
 **Web Search Results (for grounding):**
 {web_context}
 
-Respond with valid JSON only. Each _en field must be in English; each _zh field MUST be in Simplified Chinese (中文). Every field MUST be at least one complete sentence (except community_discussion fields when no comments exist):
+Respond with valid JSON only. Each _en field must be in English; each _zh field MUST be in Vietnamese. Every field MUST be at least one complete sentence (except community_discussion fields when no comments exist):
 {{
   "title_en": "<short headline in English, ≤15 words>", 
   "title_zh": "<Viết một tiêu đề ngắn gọn bằng Tiếng Việt, không quá 15 từ>", 
