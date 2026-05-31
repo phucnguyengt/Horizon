@@ -126,8 +126,8 @@ Field definitions:
 
 **CRITICAL — Language rules (MUST follow):**
 - All *_en fields MUST be written in English.
-- All *_zh fields MUST be written in Simplified Chinese (简体中文). 绝对不能用英文写 _zh 字段的内容。Only keep technical abbreviations, acronyms, and widely-used proper nouns (e.g. "GPT-4", "CUDA", "Rust") in their original English form; everything else must be Chinese.
-
+- All *_zh fields MUST be written in Vietnamese (Tiếng Việt). 
+绝对不能用英文 or 中文写 _zh 字段的内容 (Do NOT use English or Chinese for _zh fields). Everything in *_zh must be purely in natural Vietnamese.
 Guidelines:
 - EVERY field (except community_discussion when no comments exist) must contain at least one complete sentence — no field may be empty or contain just a phrase
 - Base your explanation on the provided content and web search results — do NOT fabricate information
@@ -156,17 +156,17 @@ CONTENT_ENRICHMENT_USER = """Provide a structured bilingual analysis for the fol
 
 Respond with valid JSON only. Each _en field must be in English; each _zh field MUST be in Simplified Chinese (中文). Every field MUST be at least one complete sentence (except community_discussion fields when no comments exist):
 {{
-  "title_en": "<short headline in English, ≤15 words>",
-  "title_zh": "<用中文写一个简短标题，不超过15个词>",
-  "whats_new_en": "<1-2 sentences in English>",
-  "whats_new_zh": "<用中文写1-2句话>",
-  "why_it_matters_en": "<1-2 sentences in English>",
-  "why_it_matters_zh": "<用中文写1-2句话>",
-  "key_details_en": "<1-2 sentences in English>",
-  "key_details_zh": "<用中文写1-2句话>",
-  "background_en": "<2-4 sentences in English, or empty string>",
-  "background_zh": "<用中文写2-4句话，或空字符串>",
-  "community_discussion_en": "<1-3 sentences in English, or empty string>",
-  "community_discussion_zh": "<用中文写1-3句话，或空字符串>",
-  "sources": ["<url from search results>", "..."]
+  "title_en": "<short headline in English, ≤15 words>", 
+  "title_zh": "<Viết một tiêu đề ngắn gọn bằng Tiếng Việt, không quá 15 từ>", 
+  "whats_new_en": "<1-2 sentences in English>", 
+  "whats_new_zh": "<Viết 1-2 câu tóm tắt điểm mới bằng Tiếng Việt>", 
+  "why_it_matters_en": "<1-2 sentences in English>", 
+  "why_it_matters_zh": "<Viết 1-2 câu giải thích tầm quan trọng bằng Tiếng Việt>", 
+  "key_details_en": "<1-2 sentences in English>", 
+  "key_details_zh": "<Viết 1-2 câu chi tiết kỹ thuật bằng Tiếng Việt>", 
+  "background_en": "<2-4 sentences in English, or empty string>", 
+  "background_zh": "<Viết 2-4 câu kiến thức nền bằng Tiếng Việt, hoặc để trống>", 
+  "community_discussion_en": "<1-3 sentences in English, or empty string>", 
+  "community_discussion_zh": "<Viết 1-3 câu tóm tắt thảo luận cộng đồng bằng Tiếng Việt, hoặc để trống>", 
+  "sources": ["<url from search results>", "..."] 
 }}"""
