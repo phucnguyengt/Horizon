@@ -571,3 +571,35 @@ class HorizonOrchestrator:
         summarizer = DailySummarizer()
 
         return await summarizer.generate_summary(items, date, total_fetched, language=language)
+        import os
+import requests
+
+def send_to_telegram(text_content):
+    # Lấy thông tin mật từ GitHub Secrets bảo mật
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    
+    if not token or not chat_id:
+        print("⚠️ Bỏ qua Telegram: Chưa cấu hình TELEGRAM_BOT_TOKEN hoặc TELEGRAM_CHAT_ID.")
+        return
+
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    
+    # Telegram giới hạn 4096 ký tự, nếu dài quá ta cắt bớt để không bị lỗi gửi
+    if len(text_content) > 4000:
+        text_content = text_content[:4000] + "\n\n...(Bản tin quá dài, xem tiếp trên GitHub Pages của bạn)..."
+        
+    payload = {
+        "chat_id": chat_id,
+        "text": text_content,
+        "parse_mode": "Markdown"
+    }
+    
+    try:
+        response = requests.post(url, json=payload)
+        if response.status_code == 200:
+            print("🚀 Đã gửi bản tin Tiếng Việt về Telegram thành công!")
+        else:
+            print(f"❌ Lỗi Telegram: {response.text}")
+    except Exception as e:
+        print(f"❌ Không thể kết nối API Telegram: {e}")
