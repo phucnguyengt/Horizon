@@ -1,11 +1,12 @@
 """Main orchestrator coordinating the entire workflow."""
 
 import asyncio
+import os
+import httpx
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import List, Dict
 from urllib.parse import urlparse
-import httpx
 from rich.console import Console
 
 from .models import Config, ContentItem
@@ -25,6 +26,37 @@ from .ai.analyzer import ContentAnalyzer
 from .ai.summarizer import DailySummarizer
 from .ai.enricher import ContentEnricher
 from .ai.tokens import get_usage_snapshot
+
+def send_to_telegram(text_content):
+    # Lấy thông tin mật từ GitHub Secrets bảo mật
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    
+    if not token or not chat_id:
+        print("⚠️ Bỏ qua Telegram: Chưa cấu hình TELEGRAM_BOT_TOKEN hoặc TELEGRAM_CHAT_ID.")
+        return
+
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    
+    # Telegram giới hạn 4096 ký tự, nếu dài quá ta cắt bớt để không bị lỗi gửi
+    if len(text_content) > 4000:
+        text_content = text_content[:4000] + "\n\n...(Bản tin quá dài, xem tiếp trên GitHub Pages của bạn)..."
+        
+    payload = {
+        "chat_id": chat_id,
+        "text": text_content,
+        "parse_mode": "Markdown"
+    }
+    
+    try:
+        # Sử dụng httpx có sẵn của dự án thay cho requests để an toàn tuyệt đối
+        response = httpx.post(url, json=payload, timeout=10.0)
+        if response.status_code == 200:
+            print("🚀 Đã gửi bản tin Tiếng Việt về Telegram thành công!")
+        else:
+            print(f"❌ Lỗi Telegram: {response.text}")
+    except Exception as e:
+        print(f"❌ Không thể kết nối API Telegram: {e}")
 
 
 class HorizonOrchestrator:
@@ -131,6 +163,9 @@ class HorizonOrchestrator:
             for lang in self.config.ai.languages:
                 summarizer = DailySummarizer()
                 summary = await summarizer.generate_summary(important_items, today, len(all_items), language=lang)
+
+                # GỌI HÀM GỬI TELEGRAM NGAY TẠI ĐÂY
+                send_to_telegram(summary)
 
                 # Save to data/summaries/
                 summary_path = self.storage.save_daily_summary(today, summary, language=lang)
@@ -465,11 +500,7 @@ class HorizonOrchestrator:
         return [item for i, item in enumerate(items) if i not in drop_indices]
 
     async def _expand_twitter_discussion(self, items: List[ContentItem]) -> None:
-        """Second-stage: fetch reply text for important Twitter items and re-analyze.
-
-        Only runs when sources.twitter.fetch_reply_text is True.
-        Bounded by max_tweets_to_expand to control cost.
-        """
+        """Second-stage: fetch reply text for important Twitter items and re-analyze."""
         tw_cfg = self.config.sources.twitter
         if not tw_cfg or not tw_cfg.enabled or not tw_cfg.fetch_reply_text:
             return
@@ -515,14 +546,7 @@ class HorizonOrchestrator:
         await analyzer.analyze_batch(expanded)
 
     async def _enrich_important_items(self, items: List[ContentItem]) -> None:
-        """Enrich items with background knowledge (2nd AI pass).
-
-        For each item that passed the score threshold, call AI to generate
-        background knowledge based on the item's actual content.
-
-        Args:
-            items: Important items to enrich (modified in-place)
-        """
+        """Enrich items with background knowledge (2nd AI pass)."""
         if not items:
             return
 
@@ -533,14 +557,7 @@ class HorizonOrchestrator:
         self.console.print(f"   Enriched {len(items)} items\n")
 
     async def _analyze_content(self, items: List[ContentItem]) -> List[ContentItem]:
-        """Analyze content items with AI.
-
-        Args:
-            items: Items to analyze
-
-        Returns:
-            List[ContentItem]: Analyzed items
-        """
+        """Analyze content items with AI."""
         self.console.print("🤖 Analyzing content with AI...")
 
         ai_client = create_ai_client(self.config.ai)
@@ -555,51 +572,9 @@ class HorizonOrchestrator:
         total_fetched: int,
         language: str = "en",
     ) -> str:
-        """Generate daily summary.
-
-        Args:
-            items: Important items to include (already enriched with background/related)
-            date: Date string
-            total_fetched: Total items fetched
-            language: Output language ("en" or "zh")
-
-        Returns:
-            str: Markdown summary
-        """
+        """Generate daily summary."""
         self.console.print("📝 Generating daily summary...")
 
         summarizer = DailySummarizer()
 
         return await summarizer.generate_summary(items, date, total_fetched, language=language)
-        import os
-import requests
-
-def send_to_telegram(text_content):
-    # Lấy thông tin mật từ GitHub Secrets bảo mật
-    token = os.getenv("TELEGRAM_BOT_TOKEN")
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
-    
-    if not token or not chat_id:
-        print("⚠️ Bỏ qua Telegram: Chưa cấu hình TELEGRAM_BOT_TOKEN hoặc TELEGRAM_CHAT_ID.")
-        return
-
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
-    
-    # Telegram giới hạn 4096 ký tự, nếu dài quá ta cắt bớt để không bị lỗi gửi
-    if len(text_content) > 4000:
-        text_content = text_content[:4000] + "\n\n...(Bản tin quá dài, xem tiếp trên GitHub Pages của bạn)..."
-        
-    payload = {
-        "chat_id": chat_id,
-        "text": text_content,
-        "parse_mode": "Markdown"
-    }
-    
-    try:
-        response = requests.post(url, json=payload)
-        if response.status_code == 200:
-            print("🚀 Đã gửi bản tin Tiếng Việt về Telegram thành công!")
-        else:
-            print(f"❌ Lỗi Telegram: {response.text}")
-    except Exception as e:
-        print(f"❌ Không thể kết nối API Telegram: {e}")
