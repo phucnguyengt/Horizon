@@ -40,6 +40,7 @@ jobs:
           LWN_KEY: ${{ secrets.LWN_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: uv run horizon --hours 48
 
       - name: Set current date as environment variable
